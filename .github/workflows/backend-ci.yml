@@ -1,0 +1,71 @@
+# .github/workflows/backend-ci.yml
+
+name: Backend CI
+
+# 触发条件：当有代码推送到 main 分支，或者有 Pull Request 指向 main 分支时
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'backend/**'  # 只在后端代码变化时触发
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'backend/**'
+
+# 设置工作目录默认为后端
+defaults:
+  run:
+    working-directory: ./backend
+
+jobs:
+  build-and-test:
+    name: Build & Test Rust Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 代码验出 (Checkout)
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. 安装 Rust 工具链
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      # 3. 缓存 Cargo 依赖，加速后续构建
+      - name: Cache Cargo registry and index
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            backend/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('backend/Cargo.lock') }}
+
+      # 4. 检查代码格式 (对应风格受限的规范实践)
+      - name: Check formatting with rustfmt
+        run: cargo fmt -- --check
+
+      # 5. Lint 代码 (对应 Build -> Lint)
+      - name: Lint with Clippy
+        run: cargo clippy -- -D warnings # -D warnings 会将所有警告视为错误
+
+      # 6. 运行测试 (对应 Test)
+      - name: Run tests
+        run: cargo test --verbose
+
+      # 7. 构建 (对应 Build -> Build)
+      - name: Build release binary
+        run: cargo build --release --verbose
+
+      # 8. 上传构建结果 (对应 Upload results -> 构建结果)
+      # 这会将编译后的二进制文件作为一个 artifact 上传，方便后续部署步骤使用
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-binary
+          path: backend/target/release/backend

@@ -1,0 +1,65 @@
+# .github/workflows/frontend-ci.yml
+
+name: Frontend CI
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'frontend/**' # 只在前端代码变化时触发
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'frontend/**'
+
+defaults:
+  run:
+    working-directory: ./frontend
+
+jobs:
+  build-and-lint:
+    name: Build & Lint SvelteKit Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 代码验出 (Checkout)
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. 安装 Node.js 环境
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # 建议使用 LTS 版本
+
+      # 3. 缓存 npm 依赖，加速后续构建
+      - name: Cache npm dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      # 4. 安装依赖
+      - name: Install dependencies
+        run: npm install
+
+      # 5. 运行 Lint 和格式化检查 (对应 Build -> Lint & Checkstyle)
+      - name: Run style checks (ESLint & Prettier)
+        run: npm run lint
+
+      # 6. 运行 TypeScript 类型检查
+      - name: Check TypeScript types
+        run: npm run check
+
+      # 7. 构建项目 (对应 Build -> Build)
+      - name: Build application
+        run: npm run build
+
+      # 8. 上传构建结果 (可选，但对部署流程有用)
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/build # SvelteKit 默认的 build 目录
