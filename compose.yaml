@@ -1,0 +1,19 @@
+services:
+  backend:
+    build: ./backend
+    env_file: .env.backend
+    ports: ["8080:8080"]
+    depends_on: [db]
+  frontend:
+    build: ./frontend
+    ports: ["5173:5173"]
+    environment:
+      - VITE_API_URL=http://localhost:8080/graphql
+  db:
+    image: postgres:16
+    environment:
+      - POSTGRES_PASSWORD=devpass
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:

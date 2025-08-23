@@ -4,3 +4,4 @@ docs
 .roomodes
 .github/chatmodes
 .vscode
+.env.*
