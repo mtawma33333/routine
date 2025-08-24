@@ -3,10 +3,20 @@ name = "backend"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "test_connection"
+path = "src/test_connection.rs"
+
 [dependencies]
+async-graphql = "7.0.17"
 async-graphql-axum = "7.0.17"
-axum = "0.8.4"
+axum = { version = "0.8.4" }
 dotenv = "0.15.0"
-serde = { version = "1.0.219", features = ["derive"] }
-sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "postgres"] }
+sea-orm = { version = "1.1.4", features = [
+  "sqlx-postgres",
+  "runtime-tokio-native-tls",
+] }
 tokio = { version = "1.47.1", features = ["full"] }
+
+[workspace]
+members = [ "domain", "graphql", "middleware","migration", "service"]
