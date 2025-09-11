@@ -1,0 +1,24 @@
+#!/usr/bin/env sh
+
+echo "[husky] pre-commit start"
+
+# Allow skipping (e.g. HUSKY_SKIP=1 git commit ...)
+if [ "$HUSKY_SKIP" = "1" ]; then
+	echo "[husky] pre-commit skipped (HUSKY_SKIP=1)"
+	exit 0
+fi
+
+# Run lint-staged on staged files only
+echo "[husky] running lint-staged"
+bun run lint-staged || exit 1
+
+# Lightweight selective type check: only if TS/ Svelte changed
+CHANGED_TS=$(git diff --cached --name-only --diff-filter=ACMRT | grep -E '\.(ts|tsx|svelte)$' || true)
+if [ -n "$CHANGED_TS" ]; then
+	echo "[husky] type checking (backend only)"
+	bun run typecheck || exit 1
+	# Optional: frontend Svelte type check (uncomment if desired)
+	# bun run --cwd frontend check || exit 1
+fi
+
+echo "[husky] pre-commit done"

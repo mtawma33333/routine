@@ -1,0 +1,4 @@
+{
+	"*.{js,ts,svelte,jsx,tsx}": ["bun x eslint --fix", "bun x prettier --write"],
+	"*.{json,md,css,scss,html}": ["bun x prettier --write"]
+}

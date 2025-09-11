@@ -1,0 +1,40 @@
+{
+	"name": "routine",
+	"private": true,
+	"packageManager": "bun@1.1.0",
+	"workspaces": [
+		"backend",
+		"frontend",
+		"packages/*"
+	],
+	"scripts": {
+		"dev:backend": "bun run --cwd backend dev",
+		"dev:frontend": "bun run --cwd frontend dev",
+		"dev": "bun run dev:backend & bun run dev:frontend",
+		"prepare": "husky",
+		"lint": "eslint .",
+		"format": "prettier -w .",
+		"typecheck": "bun x tsc -p backend/tsconfig.json --noEmit"
+	},
+	"devDependencies": {
+		"@commitlint/cli": "^19.8.1",
+		"@commitlint/config-conventional": "^19.8.1",
+		"eslint": "^9.0.0",
+		"husky": "^9.1.7",
+		"lint-staged": "^16.1.6",
+		"prettier": "^3.2.0",
+		"typescript": "^5.4.0",
+		"wrangler": "^3.73.0"
+	},
+	"eslintConfig": {
+		"root": true
+	},
+	"lint-staged": {
+		"*.{js,ts,svelte,tsx,jsx,cjs,mjs}": [
+			"eslint --fix"
+		],
+		"*.{json,md,css,scss}": [
+			"prettier -w"
+		]
+	}
+}

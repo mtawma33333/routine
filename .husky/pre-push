@@ -1,0 +1,22 @@
+#!/usr/bin/env sh
+
+if [ "$HUSKY_SKIP" = "1" ]; then
+  exit 0
+fi
+
+echo "[husky] pre-push: running quality gates"
+
+# Fast sanity lint
+bun run lint || exit 1
+
+# Backend type check (already defined in root scripts)
+bun run typecheck || exit 1
+
+# Optional: enable when frontend type check desired before push
+# bun run --cwd frontend check || exit 1
+
+# Optional: run tests (uncomment when test suite is stable)
+# bun run --cwd frontend test:unit -- --run || exit 1
+# bun run --cwd frontend test:e2e || exit 1
+
+echo "[husky] pre-push: OK"

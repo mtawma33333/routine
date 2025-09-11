@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+
+if [ "$HUSKY_SKIP" = "1" ]; then
+	exit 0
+fi
+
+echo "[husky] commit-msg: validating conventional commit"
+bun x commitlint --edit "$1" || {
+	echo "[husky] commit message failed commitlint" >&2
+	exit 1
+}
+echo "[husky] commit message OK"
