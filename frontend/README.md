@@ -15,18 +15,20 @@ SvelteKit 构建的前端应用，部署于 Cloudflare Pages / Workers（`@svelt
 
 ---
 
-## 📁 目录结构
+## 📁 目录结构（分层约定）
 
 ```
 frontend/
   src/
-    app.html                # HTML 模板
-    app.css                 # 全局样式（Tailwind 引入）
-    hooks.ts / hooks.server.ts
-    lib/                    # 共享库 / 组件 / API 客户端扩展点
-    routes/                 # SvelteKit 路由
-      +layout.svelte
-      +page.svelte
+    app.html                     # HTML 模板
+    app.css                      # 全局样式（Tailwind 引入）
+    routes/                      # SvelteKit 路由（仅 UI）
+    lib/
+      api/                      # FEAppSvc：统一 fetch 封装与 API 调用（新）
+      stores/                   # 运行时状态（runes store / 自定义 store）（新）
+      viewmodels/               # DTO -> VM 转换与展示模型（新）
+      assets/                   # 静态资源
+      paraglide/                # i18n 构建产物
     worker-configuration.d.ts
   messages/                 # i18n 源文案 (en.json / zh.json)
   e2e/                      # Playwright 测试
@@ -149,13 +151,19 @@ GitHub Actions（规划）：
 
 - 路由组织遵循 SvelteKit 文件系统路由
 - 组件与逻辑放入 `src/lib/`，可按功能域再细分
-- API 调用：后续将在 `src/lib/api/` 增加封装（fetch wrapper + 错误适配）
+- API 调用：统一通过 `src/lib/api/` 的 FEAppSvc 调用后端，UI 不直接使用 fetch
+- Store：页面订阅 store，store 再调用 FEAppSvc；VM 负责做格式化（时间、本地化等）
+
+示例（建议）调用栈：
+
+UI 组件 -> store(todayStore) -> FEAppSvc.getToday() -> 后端 `/api/views/today` -> DTO -> VM -> UI 渲染
 
 ---
 
 ## 🔮 待办 / 路线
 
-- [ ] API 客户端封装 (`src/lib/api/`)
+- [x] 创建目录骨架：`src/lib/api`, `src/lib/stores`, `src/lib/viewmodels`
+- [ ] API 客户端封装（`src/lib/api/`）
 - [ ] 状态管理（视情况使用 runes store / 自定义 store）
 - [ ] 主题 / 暗色模式
 - [ ] 更完善的 i18n 语言切换 UI

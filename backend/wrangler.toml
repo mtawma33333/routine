@@ -6,6 +6,7 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "routine_main"
+database_id = "a120660e-94a5-440e-9ff9-087d1617a431"
 
 [env.dev]
 [env.dev.vars]

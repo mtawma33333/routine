@@ -27,77 +27,27 @@
 
 ---
 
-## 📁 目录结构
+## 📁 目录结构（整洁架构分层）
 
 ```
 backend/
   src/
-    index.ts           # 入口（创建 Hono 应用、注册路由/中间件）
-    routes/            # 路由模块（按资源拆分）
-    middlewares/       # 日志 / 错误 / 鉴权等（待实现）
-    services/          # 业务逻辑聚合层（调用 storage + 组合返回）
-    storage/           # 数据访问封装（D1/KV/R2 等）
-    utils/             # 通用工具
-  migrations/          # D1 SQL 迁移 (e.g. 0001_init.sql)
+    index.ts                 # 入口（创建 Hono 应用、注册中间件/路由）
+    middlewares/             # 日志 / 错误 / 鉴权等
+    routes/                  # 现有路由（迁移为 interfaces/http 下的 controllers）
+    utils/                   # 通用工具（Id/Time 等端口实现）
+    domain/                  # 领域层：实体/值对象/领域服务
+    application/             # 应用层：用例与端口
+      ports/                 # Repository/系统服务抽象
+      usecases/              # 业务用例实现
+    interfaces/
+      graphql/                  # 适配层：graphql
+    infrastructure/
+      d1/                    # 仓储适配器（D1 SQL + Row Mapper）
+  migrations/          # D1 SQL 迁移
   wrangler.toml        # Workers + 资源绑定配置
   worker-configuration.d.ts # 环境类型补充
 ```
-
----
-
-## 🔧 NPM 脚本
-
-| 脚本                 | 作用                                        |
-| -------------------- | ------------------------------------------- |
-| `npm run dev`        | 本地开发（wrangler dev）                    |
-| `npm start`          | 等同 dev                                    |
-| `npm run deploy`     | 部署到生产 / 指定环境                       |
-| `npm run cf-typegen` | 基于 wrangler 生成环境类型（bindings d.ts） |
-
-PowerShell 快速启动：
-
-```pwsh
-cd backend
-npm install
-npm run dev
-```
-
----
-
-## ⚙️ Wrangler / 资源绑定示例
-
-`wrangler.toml`（示意，按实际补充）：
-
-```toml
-name = "routine-backend"
-main = "src/index.ts"
-compatibility_date = "2025-09-01"
-
-[d1_databases]
-[[d1_databases]]
-binding = "DB"
-database_name = "routine-db"
-database_id = "<your-d1-id>"
-
-[kv_namespaces]
-# [[kv_namespaces]]
-# binding = "KV"
-# id = "<kv-id>"
-```
-
-开发首次创建本地 D1:
-
-```pwsh
-wrangler d1 migrations apply routine-db --local
-```
-
-运行迁移（远端）：
-
-```pwsh
-wrangler d1 migrations apply routine-db
-```
-
----
 
 ## 🗄️ 数据迁移
 
@@ -117,19 +67,6 @@ wrangler d1 migrations apply routine-db
 
 建议使用 Vitest + Miniflare（或 Wrangler 本地模拟）
 
----
-
-## 🛡️ 错误与中间件（规划）
-
-计划中间件：
-
-1. 日志：请求耗时、状态码
-2. 统一错误响应结构 `{ code, message, details? }`
-3. CORS（生产限制域名）
-4. 鉴权（后续添加 Token / Session）
-
----
-
 ## 🚀 部署流程（建议 CI）
 
 1. `npm ci`
@@ -141,31 +78,13 @@ GitHub Actions 需配置：
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
 
----
+## 🔌 实施建议
 
-## 🔐 环境变量 / Bindings
-
-通过 Wrangler 资源绑定而非 `.env`。如需逻辑条件：
-
-```ts
-export type Env = {
-	DB: D1Database;
-	// KV: KVNamespace; // 规划
-};
-```
-
----
-
-## 📑 API 约定（草案）
-
-- JSON 响应统一：
-
-```jsonc
-{ "data": <T> , "error": null }
-{ "data": null , "error": { "code": "BadRequest", "message": "..." } }
-```
-
-- 入参全部 Zod 校验；失败返回 400 + 错误枚举
+1. 保持现有 `routes/health.ts` 工作不变，新增 `interfaces/http` 与 `application` 骨架；新功能优先走新分层。
+2. 在 `application/ports` 定义 `TaskRepository`、`TransactionManager` 等接口；`infrastructure/d1` 提供实现并对接 D1。
+3. 第一批用例：`CreateTask`、`ListTasks`、`ChangeTaskStatus`、`ListToday`。
+4. 将路由迁移为 Controller：解析 -> 调用 UseCase -> Presenter 映射 -> 统一响应。
+5. 逐步将 `services/` 和 `storage/` 中逻辑迁移/拆分到新分层（如存在）。
 
 ---
 
